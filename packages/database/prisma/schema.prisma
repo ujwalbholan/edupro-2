@@ -1,0 +1,342 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =========================================================
+// ENUMS
+// =========================================================
+
+enum TenantStatus {
+  CREATED
+  PENDING_SETUP
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum InstitutionType {
+  SCHOOL
+  COLLEGE
+  UNIVERSITY
+  COACHING_CENTER
+  TUITION_CENTER
+  TRAINING_INSTITUTE
+  VOCATIONAL_INSTITUTE
+  OTHER
+}
+
+enum DomainType {
+  SYSTEM
+  CUSTOM
+}
+
+enum DomainVerificationStatus {
+  PENDING
+  VERIFIED
+  FAILED
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+}
+
+enum SessionStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+// =========================================================
+// CONTROL PLANE MODULE
+// Owns: tenants, domains, settings, theme, platform audit
+// =========================================================
+
+model Tenant {
+  id              String          @id @default(uuid()) @db.Uuid
+  slug            String          @unique
+  name            String
+  institutionType InstitutionType @default(OTHER) @map("institution_type")
+  status          TenantStatus    @default(CREATED)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  domains     TenantDomain[]
+  settings    TenantSettings?
+  theme       TenantTheme?
+  memberships TenantUser[]
+  roles       Role[]
+  invitations Invitation[]
+  auditLogs   AuditLog[]
+
+  @@map("tenants")
+}
+
+model TenantDomain {
+  id                 String                   @id @default(uuid()) @db.Uuid
+  tenantId           String                   @map("tenant_id") @db.Uuid
+  domain             String                   @unique
+  type               DomainType               @default(SYSTEM)
+  isPrimary          Boolean                  @default(false) @map("is_primary")
+  verificationStatus DomainVerificationStatus @default(PENDING) @map("verification_status")
+  sslStatus          String?                  @map("ssl_status")
+  verifiedAt         DateTime?                @map("verified_at")
+  createdAt          DateTime                 @default(now()) @map("created_at")
+  updatedAt          DateTime                 @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("tenant_domains")
+}
+
+// One row per tenant — general/localization settings
+model TenantSettings {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @unique @map("tenant_id") @db.Uuid
+  locale     String   @default("en")
+  timezone   String   @default("UTC")
+  currency   String   @default("USD")
+  dateFormat String   @default("YYYY-MM-DD") @map("date_format")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_settings")
+}
+
+// One row per tenant — branding / design tokens
+model TenantTheme {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @unique @map("tenant_id") @db.Uuid
+  primaryColor   String   @default("#2563EB") @map("primary_color")
+  secondaryColor String   @default("#0F172A") @map("secondary_color")
+  accentColor    String   @default("#F59E0B") @map("accent_color")
+  logoUrl        String?  @map("logo_url")
+  faviconUrl     String?  @map("favicon_url")
+  fontFamily     String   @default("Inter") @map("font_family")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_themes")
+}
+
+// Platform-wide audit trail — tenantId/actorId nullable for system-level events
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String?  @map("tenant_id") @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  action     String
+  resource   String
+  resourceId String?  @map("resource_id")
+  metadata   Json?
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  actor  User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("audit_logs")
+}
+
+// =========================================================
+// IDENTITY MODULE
+// Owns: users, auth, sessions, roles, permissions,
+//       memberships, invitations
+// =========================================================
+
+model User {
+  id              String     @id @default(uuid()) @db.Uuid
+  email           String     @unique
+  displayName     String?    @map("display_name")
+  passwordHash    String?    @map("password_hash")
+  status          UserStatus @default(ACTIVE)
+  emailVerifiedAt DateTime?  @map("email_verified_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  memberships     TenantUser[]
+  sessions        Session[]
+  refreshTokens   RefreshToken[]
+  auditLogs       AuditLog[]
+  invitationsSent Invitation[]
+
+  @@map("users")
+}
+
+// A user's membership within a specific tenant. A user can hold multiple
+// memberships across different tenants (e.g. teacher in Tenant A, parent in
+// Tenant B), AND multiple roles within the SAME membership (e.g. a student
+// who is also a Class Representative holds both STUDENT and CR roles at once —
+// their effective permissions are the union of every assigned role's permissions).
+model TenantUser {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roles  TenantUserRole[]
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@map("tenant_users")
+}
+
+// Join table: which roles a given membership currently holds.
+// A row here = "this membership has this role." Multiple rows per
+// TenantUser = multiple simultaneous roles (e.g. STUDENT + CR).
+model TenantUserRole {
+  tenantUserId String   @map("tenant_user_id") @db.Uuid
+  roleId       String   @map("role_id") @db.Uuid
+  assignedAt   DateTime @default(now()) @map("assigned_at")
+
+  tenantUser TenantUser @relation(fields: [tenantUserId], references: [id], onDelete: Cascade)
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([tenantUserId, roleId])
+  @@index([roleId])
+  @@map("tenant_user_roles")
+}
+
+// tenantId null = global/system role template, non-null = tenant-scoped custom role
+// Tenant admins clone a global template into a tenant-scoped Role to customize it.
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String?  @map("tenant_id") @db.Uuid
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantUserRoles TenantUserRole[]
+  rolePermissions RolePermission[]
+  invitations     Invitation[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String   @map("role_id") @db.Uuid
+  permissionId String   @map("permission_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// Invite-only onboarding: a tenant admin invites an email address with a
+// specific role. The raw token is emailed to the invitee and only its
+// hash is ever stored — never store or log the plaintext token.
+model Invitation {
+  id              String           @id @default(uuid()) @db.Uuid
+  tenantId        String           @map("tenant_id") @db.Uuid
+  email           String
+  roleId          String           @map("role_id") @db.Uuid
+  invitedByUserId String           @map("invited_by_user_id") @db.Uuid
+  tokenHash       String           @unique @map("token_hash")
+  status          InvitationStatus @default(PENDING)
+  expiresAt       DateTime         @map("expires_at")
+  acceptedAt      DateTime?        @map("accepted_at")
+  revokedAt       DateTime?        @map("revoked_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role      Role   @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  invitedBy User   @relation(fields: [invitedByUserId], references: [id], onDelete: Restrict)
+
+  // One invitation row ever per (tenant, email) — re-inviting updates this
+  // row (new token, reset expiry, status back to PENDING) rather than
+  // creating a duplicate. Enforced at the DB level, not just app logic.
+  @@unique([tenantId, email])
+  @@index([tenantId, status])
+  @@map("invitations")
+}
+
+model Session {
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  status    SessionStatus @default(ACTIVE)
+  ipAddress String?       @map("ip_address")
+  userAgent String?       @map("user_agent")
+  expiresAt DateTime      @map("expires_at")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokens RefreshToken[]
+
+  @@index([userId, status])
+  @@map("sessions")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  sessionId String    @map("session_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionId])
+  @@map("refresh_tokens")
+}
+
+model SigningKey {
+  id                  String    @id @default(uuid()) @db.Uuid
+  keyId               String    @unique @map("key_id")
+  algorithm           String
+  publicKey           String    @map("public_key")
+  encryptedPrivateKey String    @map("encrypted_private_key")
+  notBefore           DateTime? @map("not_before")
+  expiresAt           DateTime? @map("expires_at")
+  revokedAt           DateTime? @map("revoked_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  @@map("signing_keys")
+}

@@ -16,18 +16,20 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.1.11",
+    "@nestjs/config": "^12.0.0",
     "@nestjs/core": "^11.1.11",
     "@nestjs/platform-express": "^11.1.11",
-    "@repo/api": "workspace:*",
+    "escape-html": "^1.0.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "escape-html": "^1.0.3"
+    "zod": "^4.6.2"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
     "@nestjs/cli": "^11.0.14",
     "@nestjs/schematics": "^11.0.9",
     "@nestjs/testing": "^11.1.11",
+    "@repo/database-config": "workspace:*",
     "@repo/eslint-config": "workspace:*",
     "@repo/jest-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
