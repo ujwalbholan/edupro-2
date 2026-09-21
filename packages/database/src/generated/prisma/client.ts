@@ -65,6 +65,31 @@ export type TenantTheme = Prisma.TenantThemeModel
  */
 export type AuditLog = Prisma.AuditLogModel
 /**
+ * Model SubscriptionPlan
+ * 
+ */
+export type SubscriptionPlan = Prisma.SubscriptionPlanModel
+/**
+ * Model Subscription
+ * 
+ */
+export type Subscription = Prisma.SubscriptionModel
+/**
+ * Model Feature
+ * 
+ */
+export type Feature = Prisma.FeatureModel
+/**
+ * Model PlanFeature
+ * 
+ */
+export type PlanFeature = Prisma.PlanFeatureModel
+/**
+ * Model TenantFeatureOverride
+ * 
+ */
+export type TenantFeatureOverride = Prisma.TenantFeatureOverrideModel
+/**
  * Model User
  * 
  */

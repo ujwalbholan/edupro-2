@@ -9,9 +9,9 @@ export class TenantController {
 
   @Post('/create')
   async createTenant(
-    @Body(new ZodValidatorPipe(CreateTenantSchema)) data: CreateTenantDTO,
+    @Body(new ZodValidatorPipe(CreateTenantSchema))
+    tenantPayload: CreateTenantDTO,
   ) {
-    const validateData = CreateTenantSchema.parse(data);
-    await this.tenantService.create(validateData);
+    await this.tenantService.create(tenantPayload);
   }
 }

@@ -5,6 +5,9 @@ import { AppController } from './app.controller';
 import { PrismaModule, databaseConfig } from '@repo/database-config';
 import { IdentityModule } from './module/identity-service/Identity.module';
 import { ControlPanelModule } from './module/control-pannel/controlPannel.module';
+import { HealthModule } from './module/health/health.module';
+import { validateEnvironment } from './config/environment.validation';
+import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor';
 
 export const PRISMA = 'PRISMA';
 @Module({
@@ -13,12 +16,14 @@ export const PRISMA = 'PRISMA';
       isGlobal: true,
       envFilePath: '../../.env',
       load: [databaseConfig],
+      validate: validateEnvironment,
     }),
     PrismaModule,
     IdentityModule,
     ControlPanelModule,
+    HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, RequestLoggingInterceptor],
 })
 export class AppModule {}
