@@ -16,6 +16,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "db:generate": "pnpm --filter @repo/database-config generate",
     "db:migrate": "pnpm --filter @repo/database-config migrate",
+    "db:seed": "docker compose -f infrastructure/docker/docker-compose.yml --env-file infrastructure/docker/.env exec -T postgres sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\"' < packages/database/prisma/seed.sql",
     "db:studio": "pnpm --filter @repo/database-config studio"
   },
   "devDependencies": {

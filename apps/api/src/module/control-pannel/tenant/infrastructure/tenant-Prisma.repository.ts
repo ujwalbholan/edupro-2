@@ -19,9 +19,9 @@ export class TenantPrismaRepository implements TenantRepository {
   }
 
   findById(id: string): Promise<Tenant | null> {
-    throw new Error('Method not implemented.');
+    return this.prismaService.tenant.findUnique({ where: { id } });
   }
   findBySlug(slug: string): Promise<Tenant | null> {
-    throw new Error('Method not implemented.');
+    return this.prismaService.tenant.findUnique({ where: { slug } });
   }
 }

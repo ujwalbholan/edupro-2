@@ -10,13 +10,21 @@ export const CreateTenantSchema = z.object({
     .min(2, 'Minimum 2 character')
     .max(100, 'Max 100 Character')
     .optional(),
+
   name: z
     .string('Name is required')
     .min(2, 'Minimum 2 character')
     .max(100, 'Max 100 Character'),
 
-  institutionType: z.enum(InstitutionType),
-  status: z.enum(TenantStatus),
+  institutionType: z.preprocess(
+    (value) => (typeof value === 'string' ? value.toUpperCase() : value),
+    z.enum(InstitutionType),
+  ),
+
+  status: z.preprocess(
+    (value) => (typeof value === 'string' ? value.toUpperCase() : value),
+    z.enum(TenantStatus),
+  ),
 });
 
 export type CreateTenantDTO = z.infer<typeof CreateTenantSchema>;
