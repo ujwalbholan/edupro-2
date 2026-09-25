@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { ZodValidatorPipe } from 'src/common/zod-validator.pipline';
+import { ZodValidatorPipe } from 'src/common/pipline/zod-validator.pipline';
 import {
   CreateInvitationDto,
   createInvitationSchema,
