@@ -5,19 +5,25 @@ import {
 } from '@repo/database-config/dist/generated/prisma/enums';
 import { TenantService } from './tenant.service';
 
+const makeMock = <T extends (...args: any[]) => any>() =>
+  jest.fn() as unknown as jest.MockedFunction<T>;
+
 describe('TenantService', () => {
   it('creates tenant defaults and forces pending setup status', async () => {
     const repository = {
-      create: jest.fn().mockResolvedValue({ id: 'tenant-1' }),
-      findBySlug: jest
-        .fn()
-        .mockResolvedValueOnce({ id: 'existing-tenant' })
-        .mockResolvedValueOnce(null),
-      get: jest.fn(),
-      findById: jest.fn(),
-      updateTenant: jest.fn(),
-      removeTenant: jest.fn(),
+      create: makeMock<(payload: any) => Promise<any>>(),
+      findBySlug: makeMock<(slug: string) => Promise<any | null>>(),
+      get: makeMock<() => Promise<any[]>>(),
+      findById: makeMock<(id: string) => Promise<any>>(),
+      updateTenant:
+        makeMock<(tenantId: string, payload: any) => Promise<any>>(),
+      removeTenant: makeMock<(tenantId: string) => Promise<any>>(),
     };
+
+    repository.create.mockResolvedValue({ id: 'tenant-1' });
+    repository.findBySlug
+      .mockResolvedValueOnce({ id: 'existing-tenant' })
+      .mockResolvedValueOnce(null);
 
     const service = new TenantService(repository as any);
 

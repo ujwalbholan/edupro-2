@@ -5,26 +5,37 @@ import {
 } from '@repo/database-config/dist/generated/prisma/enums';
 import { TenantDomainService } from './tenant-domain.service';
 
+const makeMock = <T extends (...args: any[]) => any>(impl?: T) =>
+  jest.fn(impl) as unknown as jest.MockedFunction<T>;
+
 describe('TenantDomainService', () => {
   it('creates a tenant domain using normalized values and pending verification', async () => {
     const repository = {
-      findByTenant: jest.fn().mockResolvedValue([]),
-      findById: jest.fn(),
-      findByTenantAndId: jest.fn(),
-      findByDomain: jest.fn().mockResolvedValue(null),
-      create: jest.fn().mockResolvedValue({
-        id: 'domain-1',
-        tenantId: 'tenant-1',
-        domain: 'example.com',
-        type: DomainType.CUSTOM,
-        isPrimary: false,
-        verificationStatus: DomainVerificationStatus.PENDING,
-      }),
-      update: jest.fn(),
-      remove: jest.fn(),
-      setPrimary: jest.fn(),
-      verify: jest.fn(),
+      findByTenant: makeMock<() => Promise<any[]>>(),
+      findById: makeMock<(id: string) => Promise<any>>(),
+      findByTenantAndId:
+        makeMock<(tenantId: string, id: string) => Promise<any>>(),
+      findByDomain: makeMock<(domain: string) => Promise<any | null>>(),
+      create: makeMock<(payload: any) => Promise<any>>(),
+      update:
+        makeMock<
+          (tenantId: string, id: string, payload: any) => Promise<any>
+        >(),
+      remove: makeMock<(tenantId: string, id: string) => Promise<any>>(),
+      setPrimary: makeMock<(tenantId: string, id: string) => Promise<any>>(),
+      verify: makeMock<(tenantId: string, id: string) => Promise<any>>(),
     };
+
+    repository.findByTenant.mockResolvedValue([]);
+    repository.findByDomain.mockResolvedValue(null);
+    repository.create.mockResolvedValue({
+      id: 'domain-1',
+      tenantId: 'tenant-1',
+      domain: 'example.com',
+      type: DomainType.CUSTOM,
+      isPrimary: false,
+      verificationStatus: DomainVerificationStatus.PENDING,
+    });
 
     const service = new TenantDomainService(repository as any);
 
@@ -46,22 +57,34 @@ describe('TenantDomainService', () => {
 
   it('marks the selected domain as primary and clears others for the tenant', async () => {
     const repository = {
-      findByTenant: jest.fn().mockResolvedValue([{}]),
-      findById: jest
-        .fn()
-        .mockResolvedValue({ id: 'domain-2', tenantId: 'tenant-1' }),
-      findByTenantAndId: jest
-        .fn()
-        .mockResolvedValue({ id: 'domain-2', tenantId: 'tenant-1' }),
-      findByDomain: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      remove: jest.fn(),
-      setPrimary: jest
-        .fn()
-        .mockResolvedValue({ id: 'domain-2', isPrimary: true }),
-      verify: jest.fn(),
+      findByTenant: makeMock<() => Promise<any[]>>(),
+      findById: makeMock<(id: string) => Promise<any>>(),
+      findByTenantAndId:
+        makeMock<(tenantId: string, id: string) => Promise<any>>(),
+      findByDomain: makeMock<(domain: string) => Promise<any | null>>(),
+      create: makeMock<(payload: any) => Promise<any>>(),
+      update:
+        makeMock<
+          (tenantId: string, id: string, payload: any) => Promise<any>
+        >(),
+      remove: makeMock<(tenantId: string, id: string) => Promise<any>>(),
+      setPrimary: makeMock<(tenantId: string, id: string) => Promise<any>>(),
+      verify: makeMock<(tenantId: string, id: string) => Promise<any>>(),
     };
+
+    repository.findByTenant.mockResolvedValue([{}]);
+    repository.findById.mockResolvedValue({
+      id: 'domain-2',
+      tenantId: 'tenant-1',
+    });
+    repository.findByTenantAndId.mockResolvedValue({
+      id: 'domain-2',
+      tenantId: 'tenant-1',
+    });
+    repository.setPrimary.mockResolvedValue({
+      id: 'domain-2',
+      isPrimary: true,
+    });
 
     const service = new TenantDomainService(repository as any);
 

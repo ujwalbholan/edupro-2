@@ -2,18 +2,24 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { TenantSettingsService } from './tenant-settings.service';
 import { TenantThemeService } from './tenant-theme.service';
 
+const makeMock = <T extends (...args: any[]) => any>() =>
+  jest.fn() as unknown as jest.MockedFunction<T>;
+
 describe('TenantSettingsService', () => {
   it('creates default settings for a tenant when none exist', async () => {
     const repository = {
-      findByTenantId: jest.fn().mockResolvedValue(null),
-      upsert: jest.fn().mockResolvedValue({
-        tenantId: 'tenant-1',
-        locale: 'en',
-        timezone: 'UTC',
-        currency: 'USD',
-        dateFormat: 'YYYY-MM-DD',
-      }),
+      findByTenantId: makeMock<(tenantId: string) => Promise<any | null>>(),
+      upsert: makeMock<(tenantId: string, payload: any) => Promise<any>>(),
     };
+
+    repository.findByTenantId.mockResolvedValue(null);
+    repository.upsert.mockResolvedValue({
+      tenantId: 'tenant-1',
+      locale: 'en',
+      timezone: 'UTC',
+      currency: 'USD',
+      dateFormat: 'YYYY-MM-DD',
+    });
 
     const service = new TenantSettingsService(repository as any);
 
@@ -36,21 +42,24 @@ describe('TenantSettingsService', () => {
 
   it('updates settings without losing default values', async () => {
     const repository = {
-      findByTenantId: jest.fn().mockResolvedValue({
-        tenantId: 'tenant-1',
-        locale: 'en',
-        timezone: 'UTC',
-        currency: 'USD',
-        dateFormat: 'YYYY-MM-DD',
-      }),
-      upsert: jest.fn().mockResolvedValue({
-        tenantId: 'tenant-1',
-        locale: 'fr',
-        timezone: 'Europe/Paris',
-        currency: 'EUR',
-        dateFormat: 'DD/MM/YYYY',
-      }),
+      findByTenantId: makeMock<(tenantId: string) => Promise<any | null>>(),
+      upsert: makeMock<(tenantId: string, payload: any) => Promise<any>>(),
     };
+
+    repository.findByTenantId.mockResolvedValue({
+      tenantId: 'tenant-1',
+      locale: 'en',
+      timezone: 'UTC',
+      currency: 'USD',
+      dateFormat: 'YYYY-MM-DD',
+    });
+    repository.upsert.mockResolvedValue({
+      tenantId: 'tenant-1',
+      locale: 'fr',
+      timezone: 'Europe/Paris',
+      currency: 'EUR',
+      dateFormat: 'DD/MM/YYYY',
+    });
 
     const service = new TenantSettingsService(repository as any);
 
@@ -74,15 +83,18 @@ describe('TenantSettingsService', () => {
 describe('TenantThemeService', () => {
   it('creates default theme values for a tenant when missing', async () => {
     const repository = {
-      findByTenantId: jest.fn().mockResolvedValue(null),
-      upsert: jest.fn().mockResolvedValue({
-        tenantId: 'tenant-1',
-        primaryColor: '#2563EB',
-        secondaryColor: '#0F172A',
-        accentColor: '#F59E0B',
-        fontFamily: 'Inter',
-      }),
+      findByTenantId: makeMock<(tenantId: string) => Promise<any | null>>(),
+      upsert: makeMock<(tenantId: string, payload: any) => Promise<any>>(),
     };
+
+    repository.findByTenantId.mockResolvedValue(null);
+    repository.upsert.mockResolvedValue({
+      tenantId: 'tenant-1',
+      primaryColor: '#2563EB',
+      secondaryColor: '#0F172A',
+      accentColor: '#F59E0B',
+      fontFamily: 'Inter',
+    });
 
     const service = new TenantThemeService(repository as any);
 
