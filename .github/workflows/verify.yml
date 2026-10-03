@@ -44,7 +44,7 @@ jobs:
           go-version: stable
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --config.shamefully-hoist=true
 
       - name: Validate all YAML files
         run: pnpm check:yaml
