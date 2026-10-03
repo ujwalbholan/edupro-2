@@ -52,6 +52,11 @@ jobs:
       - name: Lint GitHub Actions workflows
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 .github/workflows/*.yml
 
+      - name: Build shared workspace packages
+        run: |
+          pnpm --filter @repo/jest-config build
+          pnpm --filter @repo/database-config build
+
       - name: Type check API
         run: pnpm --dir apps/api exec tsc --noEmit --pretty false
 

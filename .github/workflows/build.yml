@@ -41,6 +41,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build shared workspace packages
+        run: |
+          pnpm --filter @repo/jest-config build
+          pnpm --filter @repo/database-config build
+
       - name: Build API
         run: pnpm --dir apps/api exec nest build
 
