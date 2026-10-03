@@ -1,8 +1,8 @@
 import { Tenant } from '@repo/database-config/dist/generated/prisma/client';
-import { CreateTenantDTO } from '../presentation/dto/create-tenant.dto';
+import { CreateTenantData } from '../types/CreateTenantTypes';
 
 export interface TenantRepository {
-  create(tenant: CreateTenantDTO): Promise<Tenant | null>;
+  create(data: CreateTenantData): Promise<Tenant>;
   findById(id: string): Promise<Tenant | null>;
   findBySlug(slug: string): Promise<Tenant | null>;
 }

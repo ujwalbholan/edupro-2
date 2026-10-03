@@ -4,11 +4,27 @@
   "tasks": {
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": [
+        "MAIL_HOST",
+        "MAIL_PORT",
+        "MAIL_USER",
+        "MAIL_PASSWORD",
+        "MAIL_FROM",
+        "FRONTEND_URL"
+      ]
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "dist/**"],
+      "env": [
+        "MAIL_HOST",
+        "MAIL_PORT",
+        "MAIL_USER",
+        "MAIL_PASSWORD",
+        "MAIL_FROM",
+        "FRONTEND_URL"
+      ]
     },
     "lint": {},
     "test": {},
