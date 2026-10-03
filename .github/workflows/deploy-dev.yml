@@ -1,0 +1,30 @@
+name: Deploy Dev
+
+on:
+  workflow_run:
+    workflows:
+      - Build
+    types:
+      - completed
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Report deployment placeholder
+        run: |
+          echo "::warning::Development deployment is not configured; no server was changed."
+          echo "Configure the Hostinger deployment credentials and command before enabling deployment."
+          echo "Placeholder URL: https://edupro-dev.example.com"

@@ -1,0 +1,30 @@
+name: Deploy Production
+
+on:
+  workflow_run:
+    workflows:
+      - Build
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - name: Report deployment placeholder
+        run: |
+          echo "::warning::Production deployment is not configured; no Azure resources were changed."
+          echo "Configure the Azure deployment method, credentials, and deployment command before enabling deployment."
+          echo "Placeholder URL: https://edupro-main.example.com"
