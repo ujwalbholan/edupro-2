@@ -4,6 +4,7 @@ import z from 'zod';
 export const UpdateTenantSchema = CreateTenantSchema.partial({
   name: true,
   institutionType: true,
+  slug: true,
   status: true,
 });
 

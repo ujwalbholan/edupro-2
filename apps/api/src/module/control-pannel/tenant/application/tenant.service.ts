@@ -13,14 +13,31 @@ export class TenantService {
   ) {}
 
   async create(data: CreateTenantData) {
-    const baseSlug = generateSlug(data.name);
+    const normalizedName = data.name.trim();
+    const baseSlug = generateSlug(normalizedName);
     const slug = await this.generateUniqueSlug(baseSlug);
 
     const tenant = {
-      name: data.name,
+      name: normalizedName,
       slug,
       institutionType: data.institutionType,
       status: TenantStatus.PENDING_SETUP,
+      settings: {
+        create: {
+          locale: 'en',
+          timezone: 'UTC',
+          currency: 'USD',
+          dateFormat: 'YYYY-MM-DD',
+        },
+      },
+      theme: {
+        create: {
+          primaryColor: '#2563EB',
+          secondaryColor: '#0F172A',
+          accentColor: '#F59E0B',
+          fontFamily: 'Inter',
+        },
+      },
     };
 
     return this.tenantPrismaRepository.create(tenant);
@@ -49,10 +66,10 @@ export class TenantService {
     let counter = 1;
 
     while (await this.tenantPrismaRepository.findBySlug(slug)) {
-      counter++;
-
+      counter += 1;
       slug = `${baseSlug}-${counter}`;
     }
+
     return slug;
   }
 }
