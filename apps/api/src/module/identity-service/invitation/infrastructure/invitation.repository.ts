@@ -57,6 +57,16 @@ export class InvitationalRepository {
     });
   }
 
+  async getALlInvitation(tenantId: string) {
+    return await this.prismaService.invitation.findMany({
+      where: { tenantId },
+      include: {
+        role: true,
+        invitedBy: true,
+      },
+    });
+  }
+
   async create(data: Prisma.InvitationUncheckedCreateInput) {
     return await this.prismaService.invitation.create({
       data,

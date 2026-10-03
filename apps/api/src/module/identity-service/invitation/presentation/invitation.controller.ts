@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ZodValidatorPipe } from 'src/common/pipline/zod-validator.pipline';
 import {
   CreateInvitationDto,
@@ -10,16 +10,19 @@ import { InvitationService } from '../application/invitation.service';
 export class InvitationController {
   constructor(private readonly invitationService: InvitationService) {}
 
+  @Get('/invitations')
+  async getALlInvitation(@Param('tenantId') tenantId: string) {
+    return await this.invitationService.getAllInvitation(tenantId);
+  }
+
   @Post('invitations')
   async createInvitation(
     @Param('tenantId') tenantId: string,
 
     @Body(new ZodValidatorPipe(createInvitationSchema))
     data: CreateInvitationDto,
-
     // @CurrentUser() currentUser: AuthUser,
   ) {
-    console.log(data)
     return this.invitationService.create({
       tenantId,
       email: data.email,

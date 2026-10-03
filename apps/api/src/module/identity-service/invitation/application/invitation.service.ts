@@ -16,6 +16,10 @@ export class InvitationService {
     private readonly mailService: MailService,
   ) {}
 
+  async getAllInvitation(tenantId: string) {
+    return await this.invitationRepository.getALlInvitation(tenantId);
+  }
+
   async create(data: {
     tenantId: string;
     email: string;
@@ -48,7 +52,6 @@ export class InvitationService {
       throw new BadRequestException('Role does not belong to this tenant');
     }
 
-    console.log(role);
     const invitationToken = randomBytes(32).toString('base64url');
 
     const tokenHash = createHash('sha256')
@@ -62,7 +65,7 @@ export class InvitationService {
       email,
     );
 
-    let invitation;
+    let invitation: any;
 
     if (existing) {
       invitation = await this.invitationRepository.update(existing.id, {
