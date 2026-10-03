@@ -39,7 +39,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --config.shamefully-hoist=true
+        run: pnpm install --frozen-lockfile
 
       - name: Build API
         run: pnpm --dir apps/api exec nest build

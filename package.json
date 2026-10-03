@@ -23,9 +23,11 @@
     "db:studio": "pnpm --filter @repo/database-config studio"
   },
   "devDependencies": {
+    "@nuxt/opencollective": "0.4.1",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "husky": "^9.1.7",
+    "napi-postinstall": "0.3.4",
     "prettier": "^3.2.5",
     "turbo": "^2.10.12",
     "typescript": "^7.0.2",
